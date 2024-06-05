@@ -13,6 +13,8 @@ function Chat({ messages, setMessages, setIsChatOpen }) {
 
   // Ref for the messages container
   const messagesEndRef = useRef(null);
+  const tagSuggestionsRef = useRef(null); 
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -34,28 +36,62 @@ function Chat({ messages, setMessages, setIsChatOpen }) {
       description: "Set a stream description.",
     },
   ];
-
+  // Unified navigation function
+  const navigateSuggestions = (e, items, setFocusedIndex, focusedIndex, isVerticalOnly = false, suggestionRef) => {
+    e.preventDefault();
+    let newIndex = focusedIndex;
+    const itemsPerRow = isVerticalOnly ? 1 : 6;
+    switch (e.key) {
+        case "ArrowUp":
+            newIndex -= itemsPerRow;
+            break;
+        case "ArrowDown":
+            newIndex += itemsPerRow;
+            break;
+        case "ArrowLeft":
+            if (!isVerticalOnly) newIndex -= 1;
+            break;
+        case "ArrowRight":
+            if (!isVerticalOnly) newIndex += 1;
+            break;
+    }
+    newIndex = (newIndex + items.length) % items.length;
+    setFocusedIndex(newIndex);
+  
+    // Scroll into view logic
+    if (suggestionRef && suggestionRef.current) {
+      const focusedElement = suggestionRef.current.children[newIndex];
+      if (focusedElement) {
+        focusedElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest'
+        });
+      }
+    }
+  };
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape") {
         setIsChatOpen(false);
         setShowEmojis(false);
       } else if (
-        e.key === "ArrowUp" ||
-        e.key === "ArrowDown" ||
-        e.key === "ArrowLeft" ||
-        e.key === "ArrowRight"
+        showEmojis && searchResults.length && 
+        (e.key === "ArrowUp" || e.key === "ArrowDown" || e.key === "ArrowLeft" || e.key === "ArrowRight")
       ) {
-        if (showEmojis && searchResults.length) {
-          navigateEmojiSuggestions(e);
-          e.preventDefault();
-        } else if (tagSuggestions.length) {
-          navigateTagSuggestions(e);
-          e.preventDefault();
+        // Handle emoji navigation which uses all four arrow keys
+        navigateSuggestions(e, searchResults, setFocusedEmojiIndex, focusedEmojiIndex);
+        e.preventDefault();
+      } else if (
+        (tagSuggestions.length || commandSuggestions.length) &&
+        (e.key === "ArrowUp" || e.key === "ArrowDown")
+      ) {
+        // Handle navigation for tags and commands which uses only up and down arrow keys
+        if (tagSuggestions.length) {
+          navigateSuggestions(e, tagSuggestions, setFocusedTagIndex, focusedTagIndex, true, tagSuggestionsRef);
         } else if (commandSuggestions.length) {
-          navigateCommandSuggestions(e);
-          e.preventDefault();
+          navigateSuggestions(e, commandSuggestions, setFocusedCommandIndex, focusedCommandIndex, true);
         }
+        e.preventDefault();
       } else if (e.key === "Enter") {
         if (showEmojis && searchResults.length) {
           addEmoji(searchResults[focusedEmojiIndex]);
@@ -319,6 +355,9 @@ function Chat({ messages, setMessages, setIsChatOpen }) {
           .emoji-btn:hover, .emoji-btn.focused {
             background-color: #e2e2e2; /* Light grey background for focused or hovered emoji */
           }
+          .emoji-btn:focus, .suggestion:focus, .command-item:focus, .focused {
+            background-color: #e2e2e2; /* Consistent focus color for all elements when focused */
+        }
           
         `}
       </style>
@@ -334,8 +373,8 @@ function Chat({ messages, setMessages, setIsChatOpen }) {
             <div>{msg}</div>
           </div>
         ))}
-         {/* Element to reference for auto-scrolling */}
-         <div ref={messagesEndRef} />
+        {/* Element to reference for auto-scrolling */}
+        <div ref={messagesEndRef} />
       </div>
       <form onSubmit={sendMessage} className="flex gap-2 relative">
         <input
@@ -367,12 +406,14 @@ function Chat({ messages, setMessages, setIsChatOpen }) {
           </div>
         )}
         {tagSuggestions.length > 0 && (
-          <div className="tag-suggestions absolute bottom-full mb-2 w-full">
-            {tagSuggestions.map((user) => (
+          <div className="tag-suggestions absolute bottom-full mb-2 w-full overflow-auto" ref={tagSuggestionsRef}>
+            {tagSuggestions.map((user, index) => (
               <div
                 key={user.id}
                 onClick={() => setMessage(`@${user.username}`)}
-                className="suggestion py-1 px-2 hover:bg-gray-100 cursor-pointer"
+                className={`command-item py-1 px-2 hover:bg-gray-100 cursor-pointer command-item ${
+                  index === focusedTagIndex ? "focused" : ""
+                }`}
               >
                 @{user.username}
               </div>
@@ -385,7 +426,9 @@ function Chat({ messages, setMessages, setIsChatOpen }) {
               <div
                 key={index}
                 onClick={() => setMessage(item.command)}
-                className="command-item py-1 px-2 hover:bg-gray-100 cursor-pointer"
+                className={`command-item py-1 px-2 hover:bg-gray-100 cursor-pointer command-item ${
+                  index === focusedCommandIndex ? "focused" : ""
+                }`}
               >
                 {item.command}
               </div>
