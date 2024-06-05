@@ -13,6 +13,7 @@
     "@emoji-mart/react": "^1.1.1",
     "browser-image-resizer": "^2.4.1",
     "emoji-mart": "^5.6.0",
+    "fuse.js": "^7.0.0",
     "lodash": "^4.17.21",
     "lodash.debounce": "^4.0.8",
     "next": "14.2.3",
