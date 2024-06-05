@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import data from "@emoji-mart/data";
 
 function Chat({ messages, setMessages, setIsChatOpen }) {
@@ -11,12 +11,28 @@ function Chat({ messages, setMessages, setIsChatOpen }) {
   const [commandSuggestions, setCommandSuggestions] = useState([]);
   const [focusedCommandIndex, setFocusedCommandIndex] = useState(0);
 
+  // Ref for the messages container
+  const messagesEndRef = useRef(null);
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  // Effect to scroll to the bottom whenever messages change
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   const commands = [
     { command: "/mute @user", description: "Mute the user." },
     { command: "/ban @user", description: "Ban the user." },
-    { command: "/title set a title for the current stream", description: "Set a stream title." },
-    { command: "/description set a description for the current stream", description: "Set a stream description." },
+    {
+      command: "/title set a title for the current stream",
+      description: "Set a stream title.",
+    },
+    {
+      command: "/description set a description for the current stream",
+      description: "Set a stream description.",
+    },
   ];
 
   useEffect(() => {
@@ -24,13 +40,21 @@ function Chat({ messages, setMessages, setIsChatOpen }) {
       if (e.key === "Escape") {
         setIsChatOpen(false);
         setShowEmojis(false);
-      } else if (e.key === "ArrowUp" || e.key === "ArrowDown" || e.key === "ArrowLeft" || e.key === "ArrowRight") {
+      } else if (
+        e.key === "ArrowUp" ||
+        e.key === "ArrowDown" ||
+        e.key === "ArrowLeft" ||
+        e.key === "ArrowRight"
+      ) {
         if (showEmojis && searchResults.length) {
           navigateEmojiSuggestions(e);
+          e.preventDefault();
         } else if (tagSuggestions.length) {
           navigateTagSuggestions(e);
+          e.preventDefault();
         } else if (commandSuggestions.length) {
           navigateCommandSuggestions(e);
+          e.preventDefault();
         }
       } else if (e.key === "Enter") {
         if (showEmojis && searchResults.length) {
@@ -42,16 +66,27 @@ function Chat({ messages, setMessages, setIsChatOpen }) {
         } else if (commandSuggestions.length) {
           setMessage(commandSuggestions[focusedCommandIndex].command);
           e.preventDefault();
+        } else {
+          sendMessage(e); // Call sendMessage if no suggestion is active
         }
       }
     };
-  
+
     document.addEventListener("keydown", handleKeyDown);
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [setIsChatOpen, showEmojis, searchResults, focusedEmojiIndex, tagSuggestions, focusedTagIndex, commandSuggestions, focusedCommandIndex]);
-  
+  }, [
+    setIsChatOpen,
+    showEmojis,
+    searchResults,
+    focusedEmojiIndex,
+    tagSuggestions,
+    focusedTagIndex,
+    commandSuggestions,
+    focusedCommandIndex,
+  ]);
+
   // Navigate through emojis
   const navigateEmojiSuggestions = (e) => {
     e.preventDefault();
@@ -74,9 +109,9 @@ function Chat({ messages, setMessages, setIsChatOpen }) {
     newIndex = (newIndex + searchResults.length) % searchResults.length;
     setFocusedEmojiIndex(newIndex);
   };
-  
+
   // Navigate through tag suggestions
-  
+
   const navigateTagSuggestions = (e) => {
     e.preventDefault();
     let newIndex = focusedTagIndex;
@@ -91,9 +126,9 @@ function Chat({ messages, setMessages, setIsChatOpen }) {
     newIndex = (newIndex + tagSuggestions.length) % tagSuggestions.length;
     setFocusedTagIndex(newIndex);
   };
-  
+
   // Navigate through command suggestions
-  
+
   const navigateCommandSuggestions = (e) => {
     e.preventDefault();
     let newIndex = focusedCommandIndex;
@@ -105,10 +140,10 @@ function Chat({ messages, setMessages, setIsChatOpen }) {
         newIndex += 1;
         break;
     }
-    newIndex = (newIndex + commandSuggestions.length) % commandSuggestions.length;
+    newIndex =
+      (newIndex + commandSuggestions.length) % commandSuggestions.length;
     setFocusedCommandIndex(newIndex);
   };
-  
 
   const sendMessage = (e) => {
     e.preventDefault();
@@ -145,20 +180,20 @@ function Chat({ messages, setMessages, setIsChatOpen }) {
   };
 
   const handleTagSuggestions = (text) => {
-    const lastAtPos = text.lastIndexOf('@');
+    const lastAtPos = text.lastIndexOf("@");
     if (lastAtPos !== -1) {
       const query = text.substring(lastAtPos + 1).toLowerCase();
       if (query.length > 0) {
         fetch(`https://665621609f970b3b36c4625e.mockapi.io/users?limit=100`)
-          .then(res => res.json())
-          .then(data => {
-            console.log('Fetched data:', data); // Debugging output
+          .then((res) => res.json())
+          .then((data) => {
+            console.log("Fetched data:", data); // Debugging output
             const fuzzyMatch = (user, query) => {
               let score = 0;
               let tokenIndex = 0;
               let queryIndex = 0;
               const name = user.username.toLowerCase();
-              
+
               while (queryIndex < query.length && tokenIndex < name.length) {
                 if (name[tokenIndex] === query[queryIndex]) {
                   score++;
@@ -168,23 +203,27 @@ function Chat({ messages, setMessages, setIsChatOpen }) {
               }
               return score / query.length; // Returning match percentage
             };
-  
-            const filteredUsers = data.filter(user => fuzzyMatch(user, query) > 0.6); // Adjust the threshold as needed
-            setTagSuggestions(Array.isArray(filteredUsers) ? filteredUsers : []);
+
+            const filteredUsers = data.filter(
+              (user) => fuzzyMatch(user, query) > 0.6
+            ); // Adjust the threshold as needed
+            setTagSuggestions(
+              Array.isArray(filteredUsers) ? filteredUsers : []
+            );
           })
-          .catch(err => {
+          .catch((err) => {
             console.error("Fetch error:", err);
             setTagSuggestions([]); // Ensure array even in case of error
           });
       } else {
         // If there's just an '@' with no text following, fetch the top 5 users
-        fetch('https://665621609f970b3b36c4625e.mockapi.io/users?limit=5')
-          .then(res => res.json())
-          .then(data => {
-            console.log('Fallback data:', data); // Debugging output
+        fetch("https://665621609f970b3b36c4625e.mockapi.io/users?limit=5")
+          .then((res) => res.json())
+          .then((data) => {
+            console.log("Fallback data:", data); // Debugging output
             setTagSuggestions(Array.isArray(data) ? data : []);
           })
-          .catch(err => {
+          .catch((err) => {
             console.error("Fetch error:", err);
             setTagSuggestions([]); // Ensure array even in case of error
           });
@@ -193,15 +232,17 @@ function Chat({ messages, setMessages, setIsChatOpen }) {
       setTagSuggestions([]);
     }
   };
-  
-  
 
   const handleCommandSuggestions = (text) => {
     const commandRegex = /^\/(\w*)$/;
     const match = text.match(commandRegex);
     if (match) {
       const searchTerm = match[1].toLowerCase();
-      setCommandSuggestions(commands.filter((command) => command.command.startsWith("/" + searchTerm)));
+      setCommandSuggestions(
+        commands.filter((command) =>
+          command.command.startsWith("/" + searchTerm)
+        )
+      );
     } else {
       setCommandSuggestions([]);
     }
@@ -213,8 +254,12 @@ function Chat({ messages, setMessages, setIsChatOpen }) {
     if (match && match[1]) {
       const searchTerm = match[1].toLowerCase();
       const filteredEmojis = Object.values(data.emojis).filter(
-        (emoji) => emoji.name.toLowerCase().includes(searchTerm) ||
-        (emoji.keywords && emoji.keywords.some((keyword) => keyword.toLowerCase().includes(searchTerm)))
+        (emoji) =>
+          emoji.name.toLowerCase().includes(searchTerm) ||
+          (emoji.keywords &&
+            emoji.keywords.some((keyword) =>
+              keyword.toLowerCase().includes(searchTerm)
+            ))
       );
       setSearchResults(filteredEmojis);
       setShowEmojis(true);
@@ -279,11 +324,18 @@ function Chat({ messages, setMessages, setIsChatOpen }) {
       </style>
       <div className="messages-container overflow-y-auto flex-1 bg-white border border-gray-300 rounded-lg p-4 mb-4">
         {messages.map((msg, index) => (
-          <div key={index} className={`message mb-2 last:mb-0 p-2 rounded ${msg.includes("@Domenica18") ? "bg-gray-200" : "bg-transparent"}`}>
+          <div
+            key={index}
+            className={`message mb-2 last:mb-0 p-2 rounded ${
+              msg.includes("@Domenica18") ? "bg-gray-200" : "bg-transparent"
+            }`}
+          >
             <div className="font-bold">Domenica18</div>
             <div>{msg}</div>
           </div>
         ))}
+         {/* Element to reference for auto-scrolling */}
+         <div ref={messagesEndRef} />
       </div>
       <form onSubmit={sendMessage} className="flex gap-2 relative">
         <input
@@ -305,7 +357,9 @@ function Chat({ messages, setMessages, setIsChatOpen }) {
               <button
                 key={index}
                 onClick={() => addEmoji(emoji)}
-                className={`emoji-btn ${index === focusedEmojiIndex ? "focused" : ""}`}
+                className={`emoji-btn ${
+                  index === focusedEmojiIndex ? "focused" : ""
+                }`}
               >
                 {getNativeEmoji(emoji)}
               </button>
@@ -338,7 +392,6 @@ function Chat({ messages, setMessages, setIsChatOpen }) {
             ))}
           </div>
         )}
-
       </form>
     </div>
   );

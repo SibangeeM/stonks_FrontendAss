@@ -132,7 +132,7 @@ const UserTable = () => {
     if (loading) return <p>Loading...</p>;
 
     return (
-        <div className="flex flex-col items-center mt-8 w-full">
+        <div className="flex flex-col items-center mt-8 mb-4 pb-4 w-full">
             <div className="overflow-x-auto w-full max-w-5xl mx-auto px-2 sm:px-6 lg:px-8">
                 <div className="mb-4 flex flex-col sm:flex-row justify-between w-full">
                     <input
