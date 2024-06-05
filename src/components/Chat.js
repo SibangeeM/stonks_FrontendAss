@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import data from "@emoji-mart/data";
 
@@ -86,8 +85,14 @@ function Chat({ messages, setMessages, setIsChatOpen }) {
     if (match) {
       fetch(`https://665621609f970b3b36c4625e.mockapi.io/users?search=${match[1]}`)
         .then(res => res.json())
-        .then(data => setTagSuggestions(data))
-        .catch(err => console.log(err));
+        .then(data => {
+          // Only set tag suggestions if data is an array
+          setTagSuggestions(Array.isArray(data) ? data : []);
+        })
+        .catch(err => {
+          console.error('Fetch error:', err);
+          setTagSuggestions([]);
+        });
     } else {
       setTagSuggestions([]);
     }
