@@ -5,6 +5,7 @@ import Chat from "./Chat";
 
 const UserTable = () => {
     const router = useRouter();
+    // State hooks for various component states
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isChatOpen, setIsChatOpen] = useState(false);
@@ -13,16 +14,20 @@ const UserTable = () => {
     const [itemsPerPage] = useState(10);
     const [localUsername, setLocalUsername] = useState("");
 
+    // Extract query parameters for filtering
     const usernameFilter = router.query.username || "";
     const statusFilter = router.query.status || "";
 
+    // Effects for handling router changes and fetching data
     useEffect(() => {
+      // Update page state based on query parameter
         const page = parseInt(router.query.page, 10) || 1;
         setCurrentPage(page);
         setLocalUsername(usernameFilter);
     }, [router.query.page, router.query.username]);
 
     useEffect(() => {
+      // Fetch data based on filter settings
         const fetchData = async () => {
             setLoading(true);
             const response = await fetch(`https://665621609f970b3b36c4625e.mockapi.io/users`);
@@ -38,6 +43,7 @@ const UserTable = () => {
         console.log("Current State:", { usernameFilter, statusFilter, currentPage });
     }, [usernameFilter, statusFilter, currentPage]);
 
+    // Handlers for updating filters and managing pagination
     const updateFilters = (filterUpdates) => {
         const newQuery = {
             ...router.query,
@@ -101,6 +107,7 @@ const UserTable = () => {
         }
     };
 
+// Filtering and sorting users
     const filteredUsers = users.filter(
         (user) =>
             user.username.toLowerCase().includes(localUsername.toLowerCase()) &&
@@ -108,6 +115,8 @@ const UserTable = () => {
     );
 
     const sortedUsers = [...filteredUsers].sort((a, b) => {
+
+      // Custom sort function to prioritize usernames starting with the filter string
         const aStartsWith = a.username.toLowerCase().startsWith(localUsername.toLowerCase());
         const bStartsWith = b.username.toLowerCase().startsWith(localUsername.toLowerCase());
         if (aStartsWith && !bStartsWith) return -1;
@@ -115,6 +124,7 @@ const UserTable = () => {
         return 0;
     });
 
+    // Calculate pagination details
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
     const currentItems = sortedUsers.slice(indexOfFirstItem, indexOfLastItem);
@@ -154,6 +164,7 @@ const UserTable = () => {
                         </tr>
                     </thead>
                     <tbody className="bg-white">
+                      {/*  Mapping over the currentItems array to render each item as a row in a table  */}
                         {currentItems.map((user) => (
                             <tr key={user.id} className="border-b border-gray-200">
                                 <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -173,6 +184,7 @@ const UserTable = () => {
                 </table>
                 <div className="flex justify-center mt-4">
                     <button onClick={handlePrevious} className="px-4 py-2 mx-1 rounded text-gray-700 bg-gray-200 hover:bg-gray-300">&lt;</button>
+                    {/* Generate page number buttons based on the total number of pages */}
                     {[...Array(Math.ceil(sortedUsers.length / itemsPerPage)).keys()].map((page) => (
                         <button
                             key={page + 1}
@@ -191,6 +203,7 @@ const UserTable = () => {
             >
                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M18 13a1 1 0 01-1 1h-6l-5 5V4a1 1 0 011-1h11a1 1 0 011 1v9z" /></svg>
             </button>
+            {/* Conditional rendering of the chat panel based on isChatOpen state */}
             {isChatOpen && (
                 <div className="fixed bottom-20 right-4 w-80 h-96 bg-white border border-gray-300 rounded-lg shadow-lg flex flex-col">
                     <div className="flex justify-between items-center p-2 border-b border-gray-200">

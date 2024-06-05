@@ -1,17 +1,24 @@
+// Import necessary React hooks and other libraries
 import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 import Dropzone from 'react-dropzone';
 
+// Header component for displaying user info and handling image uploads
 const Header = () => {
     const router = useRouter();
+
+    // State for holding the current and new user image URLs
     const [userImage, setUserImage] = useState('https://cloudflare-ipfs.com/ipfs/Qmd3W5DuhgHirLHGVixi6V76LhCkZUz6pnFt5AJBiyvHye/avatar/47.jpg');
     const [newImage, setNewImage] = useState(null);  // To hold the new image temporarily
+    
+    // State to control visibility of the image upload modal
     const [uploadModalOpen, setUploadModalOpen] = useState(false);
 
+    // Handles dropping a new image file into the dropzone    
     const onDrop = (acceptedFiles) => {
         const reader = new FileReader();
         reader.onload = () => {
-            setNewImage(reader.result);  // Load new image for preview
+            setNewImage(reader.result);  // Update the preview image
         };
         reader.readAsDataURL(acceptedFiles[0]);
     };
@@ -55,7 +62,7 @@ const Header = () => {
                             {({getRootProps, getInputProps}) => (
                                 <div {...getRootProps()} className="cursor-pointer p-2 text-center border-dashed border-2 border-gray-400">
                                     <input {...getInputProps()} accept="image/jpeg,image/png,image/svg+xml" />
-                                    <p className="text-gray-800 font-semibold">Click or drop a new profile image here</p>
+                                    <p className="text-gray-800 font-semibold">Click or drop a new profile image here</p>  
                                 </div>
                             )}
                         </Dropzone>

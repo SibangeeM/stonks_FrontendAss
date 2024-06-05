@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from "react";
-import data from "@emoji-mart/data";
+import data from "@emoji-mart/data"; // Importing emoji data
 
 function Chat({ messages, setMessages, setIsChatOpen }) {
-  const [message, setMessage] = useState("");
-  const [showEmojis, setShowEmojis] = useState(false);
-  const [searchResults, setSearchResults] = useState([]);
-  const [tagSuggestions, setTagSuggestions] = useState([]);
-  const [commandSuggestions, setCommandSuggestions] = useState([]);
+  const [message, setMessage] = useState(""); // State to hold the input message
+  const [showEmojis, setShowEmojis] = useState(false); // State to toggle emoji picker display
+  const [searchResults, setSearchResults] = useState([]); // Holds search results for emoji suggestions
+  const [tagSuggestions, setTagSuggestions] = useState([]); // Holds user tag suggestions
+  const [commandSuggestions, setCommandSuggestions] = useState([]); // Holds command suggestions
 
+  // Array of predefined commands
   const commands = [
     { command: '/mute @user', description: 'Mute the user.' },
     { command: '/ban @user', description: 'Ban the user.' },
@@ -15,10 +16,11 @@ function Chat({ messages, setMessages, setIsChatOpen }) {
     { command: '/description set a description for the current stream', description: 'Set a stream description.' }
   ];
 
+  // Effect to close chat on ESC key press
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape") {
-        setIsChatOpen(false);
+        setIsChatOpen(false); // Close the chat interface
       }
     };
 
@@ -28,6 +30,7 @@ function Chat({ messages, setMessages, setIsChatOpen }) {
     };
   }, [setIsChatOpen]);
 
+  // Function to handle sending messages
   const sendMessage = (e) => {
     e.preventDefault();
     if (message.trim()) {
@@ -39,27 +42,31 @@ function Chat({ messages, setMessages, setIsChatOpen }) {
     }
   };
 
+  // Get the appropriate emoji character
   const getNativeEmoji = (emoji) => {
     return emoji.skins && emoji.skins.length > 0 && emoji.skins[0].native
       ? emoji.skins[0].native
       : "🚫";
   };
 
+  // Add an emoji to the message
   const addEmoji = (emoji) => {
-    const newText = message.replace(/:[a-zA-Z0-9_]+$/, getNativeEmoji(emoji));
+    const newText = message.replace(/:[a-zA-Z0-9_]+$/, getNativeEmoji(emoji)); // Replace the colon-coded emoji with the actual emoji
     setMessage(newText);
     setShowEmojis(false);
     setSearchResults([]);
   };
 
+   // Handle input changes to provide real-time suggestions
   const handleInputChange = (e) => {
     const text = e.target.value;
     setMessage(text);
-    handleEmojiSuggestions(text);
-    handleTagSuggestions(text);
-    handleCommandSuggestions(text);
+    handleEmojiSuggestions(text); // Update emoji suggestions based on input
+    handleTagSuggestions(text); // Update tag suggestions based on input
+    handleCommandSuggestions(text);  // Update command suggestions based on input
   };
 
+  // Function to suggest emojis based on input
   const handleEmojiSuggestions = (text) => {
     const emojiRegex = /:([a-zA-Z0-9_]+)$/;
     const match = text.match(emojiRegex);
@@ -79,15 +86,16 @@ function Chat({ messages, setMessages, setIsChatOpen }) {
     }
   };
 
+  // Function to suggest tags based on input
   const handleTagSuggestions = (text) => {
-    const tagRegex = /@([a-zA-Z0-9_]+)$/;
+    const tagRegex = /@([a-zA-Z0-9_]+)$/;  // Regex to identify tags
     const match = text.match(tagRegex);
     if (match) {
-      fetch(`https://665621609f970b3b36c4625e.mockapi.io/users?search=${match[1]}`)
+      fetch(`https://665621609f970b3b36c4625e.mockapi.io/users?search=${match[1]}`) // Fetch user data for tags
         .then(res => res.json())
         .then(data => {
           // Only set tag suggestions if data is an array
-          setTagSuggestions(Array.isArray(data) ? data : []);
+          setTagSuggestions(Array.isArray(data) ? data : []); // Update tag suggestions
         })
         .catch(err => {
           console.error('Fetch error:', err);
@@ -98,6 +106,7 @@ function Chat({ messages, setMessages, setIsChatOpen }) {
     }
   };
 
+  // Function to suggest commands based on input
   const handleCommandSuggestions = (text) => {
     const commandRegex = /^\/(\w*)$/;
     const match = text.match(commandRegex);
@@ -109,8 +118,10 @@ function Chat({ messages, setMessages, setIsChatOpen }) {
     }
   };
 
+  // The return contains the main chat interface elements, including message display, input, emoji picker, and suggestions for tags and commands
   return (
     <div className="chat-container w-full h-full flex flex-col">
+      {/* CSS styles for emoji picker, suggestions, and chat interface are defined here. */}
       <style>
         {`
           .emoji-search-results {
