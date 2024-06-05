@@ -13,7 +13,7 @@ function Chat({ messages, setMessages, setIsChatOpen }) {
 
   // Ref for the messages container
   const messagesEndRef = useRef(null);
-  const tagSuggestionsRef = useRef(null); 
+  const tagSuggestionsRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -25,46 +25,47 @@ function Chat({ messages, setMessages, setIsChatOpen }) {
   }, [messages]);
 
   const commands = [
-    { command: "/mute @user", description: "Mute the user." },
-    { command: "/ban @user", description: "Ban the user." },
-    {
-      command: "/title set a title for the current stream",
-      description: "Set a stream title.",
-    },
-    {
-      command: "/description set a description for the current stream",
-      description: "Set a stream description.",
-    },
+    { command: "/mute" },
+    { command: "/ban" },
+    { command: "/title"},
+    { command: "/description" },
   ];
   // Unified navigation function
-  const navigateSuggestions = (e, items, setFocusedIndex, focusedIndex, isVerticalOnly = false, suggestionRef) => {
+  const navigateSuggestions = (
+    e,
+    items,
+    setFocusedIndex,
+    focusedIndex,
+    isVerticalOnly = false,
+    suggestionRef
+  ) => {
     e.preventDefault();
     let newIndex = focusedIndex;
     const itemsPerRow = isVerticalOnly ? 1 : 6;
     switch (e.key) {
-        case "ArrowUp":
-            newIndex -= itemsPerRow;
-            break;
-        case "ArrowDown":
-            newIndex += itemsPerRow;
-            break;
-        case "ArrowLeft":
-            if (!isVerticalOnly) newIndex -= 1;
-            break;
-        case "ArrowRight":
-            if (!isVerticalOnly) newIndex += 1;
-            break;
+      case "ArrowUp":
+        newIndex -= itemsPerRow;
+        break;
+      case "ArrowDown":
+        newIndex += itemsPerRow;
+        break;
+      case "ArrowLeft":
+        if (!isVerticalOnly) newIndex -= 1;
+        break;
+      case "ArrowRight":
+        if (!isVerticalOnly) newIndex += 1;
+        break;
     }
     newIndex = (newIndex + items.length) % items.length;
     setFocusedIndex(newIndex);
-  
+
     // Scroll into view logic
     if (suggestionRef && suggestionRef.current) {
       const focusedElement = suggestionRef.current.children[newIndex];
       if (focusedElement) {
         focusedElement.scrollIntoView({
-          behavior: 'smooth',
-          block: 'nearest'
+          behavior: "smooth",
+          block: "nearest",
         });
       }
     }
@@ -75,11 +76,20 @@ function Chat({ messages, setMessages, setIsChatOpen }) {
         setIsChatOpen(false);
         setShowEmojis(false);
       } else if (
-        showEmojis && searchResults.length && 
-        (e.key === "ArrowUp" || e.key === "ArrowDown" || e.key === "ArrowLeft" || e.key === "ArrowRight")
+        showEmojis &&
+        searchResults.length &&
+        (e.key === "ArrowUp" ||
+          e.key === "ArrowDown" ||
+          e.key === "ArrowLeft" ||
+          e.key === "ArrowRight")
       ) {
         // Handle emoji navigation which uses all four arrow keys
-        navigateSuggestions(e, searchResults, setFocusedEmojiIndex, focusedEmojiIndex);
+        navigateSuggestions(
+          e,
+          searchResults,
+          setFocusedEmojiIndex,
+          focusedEmojiIndex
+        );
         e.preventDefault();
       } else if (
         (tagSuggestions.length || commandSuggestions.length) &&
@@ -87,9 +97,22 @@ function Chat({ messages, setMessages, setIsChatOpen }) {
       ) {
         // Handle navigation for tags and commands which uses only up and down arrow keys
         if (tagSuggestions.length) {
-          navigateSuggestions(e, tagSuggestions, setFocusedTagIndex, focusedTagIndex, true, tagSuggestionsRef);
+          navigateSuggestions(
+            e,
+            tagSuggestions,
+            setFocusedTagIndex,
+            focusedTagIndex,
+            true,
+            tagSuggestionsRef
+          );
         } else if (commandSuggestions.length) {
-          navigateSuggestions(e, commandSuggestions, setFocusedCommandIndex, focusedCommandIndex, true);
+          navigateSuggestions(
+            e,
+            commandSuggestions,
+            setFocusedCommandIndex,
+            focusedCommandIndex,
+            true
+          );
         }
         e.preventDefault();
       } else if (e.key === "Enter") {
@@ -98,9 +121,11 @@ function Chat({ messages, setMessages, setIsChatOpen }) {
           e.preventDefault(); // Prevent form submission
         } else if (tagSuggestions.length) {
           setMessage(`@${tagSuggestions[focusedTagIndex].username}`);
+          setTagSuggestions([]); // Hide tag suggestions after selection
           e.preventDefault();
         } else if (commandSuggestions.length) {
           setMessage(commandSuggestions[focusedCommandIndex].command);
+          setCommandSuggestions([]); // Hide command suggestions after selection
           e.preventDefault();
         } else {
           sendMessage(e); // Call sendMessage if no suggestion is active
@@ -123,66 +148,10 @@ function Chat({ messages, setMessages, setIsChatOpen }) {
     focusedCommandIndex,
   ]);
 
-  // Navigate through emojis
-  const navigateEmojiSuggestions = (e) => {
-    e.preventDefault();
-    const emojisPerRow = 6; // Change this as per your UI
-    let newIndex = focusedEmojiIndex;
-    switch (e.key) {
-      case "ArrowUp":
-        newIndex -= emojisPerRow;
-        break;
-      case "ArrowDown":
-        newIndex += emojisPerRow;
-        break;
-      case "ArrowLeft":
-        newIndex -= 1;
-        break;
-      case "ArrowRight":
-        newIndex += 1;
-        break;
-    }
-    newIndex = (newIndex + searchResults.length) % searchResults.length;
-    setFocusedEmojiIndex(newIndex);
-  };
-
-  // Navigate through tag suggestions
-
-  const navigateTagSuggestions = (e) => {
-    e.preventDefault();
-    let newIndex = focusedTagIndex;
-    switch (e.key) {
-      case "ArrowUp":
-        newIndex -= 1;
-        break;
-      case "ArrowDown":
-        newIndex += 1;
-        break;
-    }
-    newIndex = (newIndex + tagSuggestions.length) % tagSuggestions.length;
-    setFocusedTagIndex(newIndex);
-  };
-
-  // Navigate through command suggestions
-
-  const navigateCommandSuggestions = (e) => {
-    e.preventDefault();
-    let newIndex = focusedCommandIndex;
-    switch (e.key) {
-      case "ArrowUp":
-        newIndex -= 1;
-        break;
-      case "ArrowDown":
-        newIndex += 1;
-        break;
-    }
-    newIndex =
-      (newIndex + commandSuggestions.length) % commandSuggestions.length;
-    setFocusedCommandIndex(newIndex);
-  };
-
   const sendMessage = (e) => {
-    e.preventDefault();
+    e.preventDefault(); // stops the form from submitting, which would cause the page to reload.
+
+    //  trims the message and checks if there's any content.
     if (message.trim()) {
       setMessages([...messages, message]);
       setMessage("");
@@ -199,6 +168,7 @@ function Chat({ messages, setMessages, setIsChatOpen }) {
       : "🚦";
   };
 
+  //  Replaces the last typed emoji code in the message input with the actual emoji character.
   const addEmoji = (emoji) => {
     const newText = message.replace(/:[a-zA-Z0-9_]+$/, getNativeEmoji(emoji));
     setMessage(newText);
@@ -269,10 +239,13 @@ function Chat({ messages, setMessages, setIsChatOpen }) {
     }
   };
 
+  // provide suggestions for commands 
   const handleCommandSuggestions = (text) => {
+    // regular expression (commandRegex) to detect text that begins with a slash followed by word characters (alphanumeric and underscores)
     const commandRegex = /^\/(\w*)$/;
     const match = text.match(commandRegex);
     if (match) {
+      // converted to lowercase to ensure case-insensitive searching.
       const searchTerm = match[1].toLowerCase();
       setCommandSuggestions(
         commands.filter((command) =>
@@ -285,8 +258,11 @@ function Chat({ messages, setMessages, setIsChatOpen }) {
   };
 
   const handleEmojiSuggestions = (text) => {
+    // regular expression to detect patterns that start with a colon followed by alphanumeric characters and underscores
     const emojiRegex = /:([a-zA-Z0-9_]+)$/;
-    const match = text.match(emojiRegex);
+    const match = text.match(emojiRegex); // attempts to match the provided text against the emojiRegex.
+
+    //proceeds to search for relevant emojis
     if (match && match[1]) {
       const searchTerm = match[1].toLowerCase();
       const filteredEmojis = Object.values(data.emojis).filter(
@@ -301,6 +277,7 @@ function Chat({ messages, setMessages, setIsChatOpen }) {
       setShowEmojis(true);
       setFocusedEmojiIndex(0);
     } else {
+      // clears any existing search results and hides the emoji suggestions
       setSearchResults([]);
       setShowEmojis(false);
     }
@@ -406,7 +383,10 @@ function Chat({ messages, setMessages, setIsChatOpen }) {
           </div>
         )}
         {tagSuggestions.length > 0 && (
-          <div className="tag-suggestions absolute bottom-full mb-2 w-full overflow-auto" ref={tagSuggestionsRef}>
+          <div
+            className="tag-suggestions absolute bottom-full mb-2 w-full overflow-auto"
+            ref={tagSuggestionsRef}
+          >
             {tagSuggestions.map((user, index) => (
               <div
                 key={user.id}

@@ -1,15 +1,20 @@
-import React, { useState } from 'react';
-import { useRouter } from 'next/router';
-import Dropzone from 'react-dropzone';
-import imageCompression from 'browser-image-compression';
+// state management within the component
+import React, { useState } from 'react'; 
+import { useRouter } from 'next/router'; // handle routing actions
+import Dropzone from 'react-dropzone'; // for handling drag-and-drop file uploads
+import imageCompression from 'browser-image-compression'; // to compress images
 
 const Header = () => {
   const router = useRouter();
-  const [userImage, setUserImage] = useState('https://cloudflare-ipfs.com/ipfs/Qmd3W5DuhgHirLHGVixi6V76LhCkZUz6pnFt5AJBiyvHye/avatar/47.jpg');
-  const [newImage, setNewImage] = useState(null);
-  const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [userImage, setUserImage] = useState('https://cloudflare-ipfs.com/ipfs/Qmd3W5DuhgHirLHGVixi6V76LhCkZUz6pnFt5AJBiyvHye/avatar/47.jpg'); //  initially set to a default image URL
+  const [newImage, setNewImage] = useState(null); //  initially null, will hold the base64 URL of a newly uploaded and potentially compressed image
+  const [uploadModalOpen, setUploadModalOpen] = useState(false); //  to toggle visibility of the image upload modal
 
-
+// Handling Image Upload
+// Takes the first file from the dropped files.
+// Logs the original size of the file.
+// Sets compression options like maximum size and dimensions.
+// Compresses the image and reads it as a data URL using FileReader, then updates newImage with this data.
 
   const onDrop = async (acceptedFiles) => {
     const file = acceptedFiles[0];
@@ -33,6 +38,7 @@ const Header = () => {
     }
   };
 
+//Saving and Cancelling Image
   const handleSaveImage = async () => {
     if (newImage) {
       setUserImage(newImage); // Save the new image as the user image

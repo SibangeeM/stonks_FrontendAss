@@ -47,7 +47,7 @@ const UserTable = () => {
     const updateFilters = (filterUpdates) => {
         const newQuery = {
             ...router.query,
-            ...filterUpdates,
+            ...filterUpdates, 
             page: "1",
         };
         router.push({ pathname: router.pathname, query: newQuery }, undefined, {
@@ -66,6 +66,7 @@ const UserTable = () => {
         );
     };
 
+// Decreases the current page number by one, ensuring it does not go below 1.
     const handlePrevious = () => {
         setCurrentPage((prev) => {
             const newPage = prev > 1 ? prev - 1 : 1;
@@ -80,7 +81,7 @@ const UserTable = () => {
             return newPage;
         });
     };
-
+// Increases the current page number, ensuring it does not exceed the total number of pages calculated based on available data (filteredUsers) and items per page (itemsPerPage).
     const handleNext = () => {
         setCurrentPage((prev) => {
             const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
@@ -101,6 +102,7 @@ const UserTable = () => {
         setLocalUsername(e.target.value);
     };
 
+   // Listens for an "Enter" key press to apply the username filter by updating the query parameters using the updateFilters function
     const handleUsernameKeyPress = (e) => {
         if (e.key === "Enter") {
             updateFilters({ username: localUsername });
